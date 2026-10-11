@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run-On Rescue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+  :root {
+    --bg: #FAF8F3;
+    --ink: #141414;
+    --muted: #555555;
+    --line: #D8D3C8;
+    --card: #FFFFFF;
+    --accent: #C2410C;      /* problems, run-ons */
+    --good: #1D4ED8;        /* fixes, good examples */
+    --tab-h: 3.2rem;
+  }
+  html { font-size: 28px; }                 /* default size: M; JS changes this */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
+    line-height: 1.45;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  h1, h2, .display { font-family: 'Archivo Black', system-ui, sans-serif; font-weight: 400; line-height: 1.1; }
+
+  /* ---------- Top bar ---------- */
+  header {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--ink); color: #fff;
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.35rem 0.6rem;
+    flex-wrap: wrap;
+  }
+  nav { display: flex; gap: 0.3rem; flex-wrap: wrap; flex: 1; }
+  nav button, .size button, .pager button, .reveal {
+    font: inherit; cursor: pointer; border: 0;
+  }
+  nav button {
+    background: transparent; color: #CFCFCF;
+    font-size: 0.62rem; font-weight: 700;
+    padding: 0.35rem 0.6rem; border-radius: 0.3rem;
+    letter-spacing: 0.02em;
+  }
+  nav button[aria-selected="true"] { background: #fff; color: var(--ink); }
+  nav button:hover { color: #fff; }
+  nav button[aria-selected="true"]:hover { color: var(--ink); }
+  .size { display: flex; align-items: center; gap: 0.2rem; font-size: 0.55rem; color: #CFCFCF; }
+  .size button {
+    background: #2A2A2A; color: #fff; font-weight: 700;
+    font-size: 0.55rem; min-width: 1.9rem; padding: 0.3rem 0.4rem; border-radius: 0.25rem;
+  }
+  .size button[aria-pressed="true"] { background: var(--accent); }
+
+  /* ---------- Sections ---------- */
+  main { flex: 1; display: flex; }
+  section {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1.2rem 1rem 1.6rem;
+    text-align: center;
+  }
+  section.active { display: flex; }
+  .wrap { width: 100%; max-width: 34em; }
+  .eyebrow {
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 0.4rem;
+  }
+  h1 { font-size: 2.6rem; margin: 0 0 0.6rem; }
+  h2 { font-size: 1.7rem; margin: 0 0 0.7rem; }
+  p { margin: 0.4rem 0; }
+  .lead { font-size: 1.15rem; }
+  .big { font-size: 1.5rem; font-weight: 700; }
+  .muted { color: var(--muted); }
+  .bad { color: var(--accent); }
+  .good { color: var(--good); }
+
+  .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin-top: 1rem; }
+  .cards.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card {
+    background: var(--card); border: 2px solid var(--line); border-radius: 0.5rem;
+    padding: 0.7rem 0.8rem; text-align: left;
+  }
+  .card h3 { margin: 0 0 0.2rem; font-size: 0.95rem; }
+  .card p { margin: 0; font-size: 0.8rem; }
+  .card.bad-card { border-color: var(--accent); }
+  .card.good-card { border-color: var(--good); }
+  .card .tag {
+    display: inline-block; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 0.3rem;
+  }
+
+  blockquote {
+    margin: 0.8rem 0; padding: 0.8rem 1rem;
+    background: var(--card); border: 2px solid var(--line); border-radius: 0.5rem;
+    text-align: left; font-size: 0.95rem;
+  }
+  blockquote cite { display: block; margin-top: 0.4rem; font-size: 0.65rem; color: var(--muted); font-style: normal; }
+
+  .rules { list-style: none; padding: 0; margin: 0.8rem 0 0; text-align: left; display: grid; gap: 0.45rem; }
+  .rules li {
+    background: var(--card); border: 2px solid var(--line); border-radius: 0.5rem;
+    padding: 0.55rem 0.8rem; font-size: 0.9rem; display: flex; justify-content: space-between; gap: 1rem; align-items: center;
+  }
+  .rules li b.ans { color: var(--accent); white-space: nowrap; }
+
+  .words { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: center; margin: 0.4rem 0; }
+  .chip { border: 2px solid currentColor; border-radius: 999px; padding: 0.1rem 0.6rem; font-size: 0.75rem; font-weight: 700; }
+
+  .example { text-align: left; font-size: 1rem; background: var(--card); border: 2px solid var(--line); border-radius: 0.5rem; padding: 0.8rem 1rem; margin: 0.6rem 0; }
+  .example .label { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: block; margin-bottom: 0.25rem; }
+  .fixed { display: none; border-color: var(--good); }
+  .fixed.show { display: block; }
+  .fixed p { margin: 0.15rem 0; }
+
+  .reveal {
+    margin-top: 0.5rem; background: var(--good); color: #fff; font-weight: 700;
+    font-size: 0.75rem; padding: 0.45rem 1rem; border-radius: 0.4rem;
+  }
+  .reveal.secondary { background: var(--ink); }
+
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 0.6rem 0 0; text-align: left; display: grid; gap: 0.4rem; }
+  .steps li { counter-increment: s; display: grid; grid-template-columns: 1.7rem 1fr; gap: 0.6rem; align-items: start; font-size: 0.9rem; }
+  .steps li::before {
+    content: counter(s); font-family: 'Archivo Black', system-ui, sans-serif;
+    background: var(--ink); color: #fff; width: 1.6rem; height: 1.6rem; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-top: 0.1rem;
+  }
+  .callout { margin-top: 0.9rem; font-size: 1.1rem; font-weight: 700; }
+  .callout span { color: var(--accent); }
+
+  /* ---------- Pager ---------- */
+  .pager { display: flex; justify-content: space-between; padding: 0 0.8rem 0.6rem; }
+  .pager button {
+    background: transparent; color: var(--muted); font-size: 0.6rem; font-weight: 700;
+    padding: 0.3rem 0.6rem; border-radius: 0.3rem;
+  }
+  .pager button:hover { color: var(--ink); background: #ECE8DF; }
+  .pager button:disabled { visibility: hidden; }
+
+  @media (max-width: 700px) {
+    html { font-size: 18px !important; }
+    .cards, .cards.two { grid-template-columns: 1fr; }
+    h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav role="tablist" aria-label="Lesson sections">
+    <button role="tab" aria-selected="true"  data-tab="0">Today</button>
+    <button role="tab" aria-selected="false" data-tab="1">Run-Ons</button>
+    <button role="tab" aria-selected="false" data-tab="2">"But"</button>
+    <button role="tab" aria-selected="false" data-tab="3">Transitions</button>
+    <button role="tab" aria-selected="false" data-tab="4">Breath Test</button>
+    <button role="tab" aria-selected="false" data-tab="5">Assignment</button>
+  </nav>
+  <div class="size" aria-label="Text size">
+    Size
+    <button data-size="20">S</button>
+    <button data-size="28" aria-pressed="true">M</button>
+    <button data-size="38">L</button>
+    <button data-size="50">XL</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- 0. TODAY -->
+  <section class="active" role="tabpanel">
+    <div class="wrap">
+      <p class="eyebrow">Today</p>
+      <h1>Run-On Rescue</h1>
+      <p class="lead">Writing. Listening. Speaking.</p>
+      <div class="cards">
+        <div class="card"><h3>Writing</h3><p>Fix run-on sentences.</p></div>
+        <div class="card"><h3>Listening</h3><p>Write what you hear.</p></div>
+        <div class="card"><h3>Speaking</h3><p>Be loud enough to be heard.</p></div>
+      </div>
+      <p class="callout">You are the <span>judge</span> of your peers.</p>
+    </div>
+  </section>
+
+  <!-- 1. RUN-ONS -->
+  <section role="tabpanel">
+    <div class="wrap">
+      <p class="eyebrow">Writing</p>
+      <h2>What is a run-on sentence?</h2>
+      <p class="lead">Two or more ideas stuck together with no stop.</p>
+      <blockquote>
+        It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of Light, it was the season of Darkness, it was the spring of hope, it was the winter of despair...
+        <cite>Charles Dickens, A Tale of Two Cities (1859)</cite>
+      </blockquote>
+      <p class="big">Which detail do you remember?</p>
+      <p class="muted">Too many ideas, no stops. The reader can't decide what to hold on to.</p>
+    </div>
+  </section>
+
+  <!-- 2. BUT -->
+  <section role="tabpanel">
+    <div class="wrap">
+      <div id="but1">
+        <p class="eyebrow">Writing</p>
+        <h2>"But" is the most important word</h2>
+        <div class="cards two">
+          <div class="card">
+            <span class="tag muted">Before "but"</span>
+            <h3>Not important.</h3>
+          </div>
+          <div class="card bad-card">
+            <span class="tag bad">After "but"</span>
+            <h3>That's the point.</h3>
+          </div>
+        </div>
+        <div class="example">
+          <span class="label bad">Example 1</span>
+          I like her, but...
+        </div>
+        <div class="example fixed" id="but-ex1">
+          <span class="label good">The point</span>
+          <p>...she always eats my snacks.</p>
+        </div>
+        <button class="reveal" data-target="but-ex1">Show the ending</button>
+        <div class="example" style="margin-top:0.9rem">
+          <span class="label bad">Example 2</span>
+          We stayed up late and had a great time. But...
+        </div>
+        <div class="example fixed" id="but-ex2">
+          <span class="label good">The point</span>
+          <p>...we had a test at 9 a.m.</p>
+        </div>
+        <button class="reveal" data-target="but-ex2">Show the ending</button>
+        <button class="reveal secondary" id="but-next">Why do we start with "But"?</button>
+      </div>
+
+      <div id="but2" style="display:none">
+        <p class="eyebrow">Writing</p>
+        <h2>Why do we start with "But"?</h2>
+        <div class="cards two">
+          <div class="card">
+            <span class="tag muted">Korean</span>
+            <h3>그런데...</h3>
+            <p>"So..." "By the way..." "Anyway..." The story keeps going.</p>
+          </div>
+          <div class="card bad-card">
+            <span class="tag bad">English</span>
+            <h3>But...</h3>
+            <p>"Here comes the problem." Everyone waits for bad news.</p>
+          </div>
+        </div>
+        <p class="big" style="margin-top:1rem">The test:</p>
+        <ul class="rules">
+          <li>Is a problem or a surprise coming? <b class="good" style="white-space:nowrap">Use "But."</b></li>
+          <li>No problem? No surprise? <b class="ans">Delete it.</b></li>
+        </ul>
+        <button class="reveal secondary" id="but-prev" style="margin-top:0.9rem">Back to the examples</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. TRANSITIONS -->
+  <section role="tabpanel">
+    <div class="wrap">
+      <p class="eyebrow">Writing</p>
+      <h2>Transitions are a crutch</h2>
+      <div class="words bad">
+        <span class="chip">Firstly,</span><span class="chip">Moreover,</span><span class="chip">In addition,</span><span class="chip">Furthermore,</span><span class="chip">Also,</span>
+      </div>
+      <ul class="rules">
+        <li>Is it something new? <b class="ans">Don't use it.</b></li>
+        <li>Not sure? <b class="ans">Don't use it.</b></li>
+        <li>Have to justify it? <b class="ans">Don't use it.</b></li>
+      </ul>
+      <p class="lead" style="margin-top:0.8rem"><b>One transition per paragraph. Maximum.</b></p>
+      <p class="muted">Free inside a sentence:</p>
+      <div class="words good">
+        <span class="chip">and</span><span class="chip">but</span><span class="chip">so</span><span class="chip">because</span>
+      </div>
+      <p class="muted">"But it happened in that order!" The reader already knows. Your sentence order shows the time order.</p>
+    </div>
+  </section>
+
+  <!-- 4. BREATH TEST -->
+  <section role="tabpanel">
+    <div class="wrap">
+      <p class="eyebrow">Writing + Speaking</p>
+      <h2>One sentence, one breath.</h2>
+      <p class="muted">Read it out loud in one breath. Did you struggle?</p>
+
+      <div id="ex1">
+        <div class="example">
+          <span class="label bad">Example 1</span>
+          I went to the library to study for my test and then my friend came and also she brought snacks so we ate them and then we talked for an hour and we did not study at all.
+        </div>
+        <div class="example fixed" id="ex1-fix">
+          <span class="label good">Break it up</span>
+          <p>I went to the library to study for my test.</p>
+          <p>My friend came with snacks.</p>
+          <p>We ate them and talked for an hour.</p>
+          <p>We did not study at all.</p>
+        </div>
+        <button class="reveal" data-target="ex1-fix">Break it up</button>
+        <button class="reveal secondary" id="next-ex">Next example</button>
+      </div>
+
+      <div id="ex2" style="display:none">
+        <div class="example">
+          <span class="label bad">Example 2</span>
+          Moreover, I got a new puppy last week and he is very cute and then he chewed my shoes and also he cried all night so nobody in my family could sleep.
+        </div>
+        <div class="example fixed" id="ex2-fix">
+          <span class="label good">Break it up</span>
+          <p>I got a new puppy last week.</p>
+          <p>He is very cute.</p>
+          <p>He chewed my shoes.</p>
+          <p>He cried all night, so nobody in my family could sleep.</p>
+        </div>
+        <button class="reveal" data-target="ex2-fix">Break it up</button>
+        <button class="reveal secondary" id="prev-ex">Back to example 1</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. ASSIGNMENT -->
+  <section role="tabpanel">
+    <div class="wrap">
+      <p class="eyebrow">Today's Assignment</p>
+      <h2>Run-On Rescue</h2>
+      <ol class="steps">
+        <li><span>Fix <b>#1</b> on your own paper.</span></li>
+        <li><span>Slide your paper <b>left</b>. Fix the next number on your friend's paper.</span></li>
+        <li><span>Keep going until <b>#5</b> is done.</span></li>
+        <li><span>Read your friends' answers out loud. Whose handwriting is easiest to read?</span></li>
+        <li><span><b>Listening round:</b> one student stands and reads her short sentences. Everyone writes what they hear on the back.</span></li>
+      </ol>
+      <p class="callout">Didn't hear it? Say: <span>"One more time, please!"</span></p>
+    </div>
+  </section>
+
+</main>
+
+<div class="pager">
+  <button id="prev">Back</button>
+  <button id="next">Next</button>
+</div>
+
+<script>
+  const tabs = [...document.querySelectorAll('nav button')];
+  const panels = [...document.querySelectorAll('section')];
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  let current = 0;
+
+  function show(i) {
+    current = Math.max(0, Math.min(panels.length - 1, i));
+    panels.forEach((p, n) => p.classList.toggle('active', n === current));
+    tabs.forEach((t, n) => t.setAttribute('aria-selected', n === current));
+    prev.disabled = current === 0;
+    next.disabled = current === panels.length - 1;
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach((t, n) => t.addEventListener('click', () => show(n)));
+  prev.addEventListener('click', () => show(current - 1));
+  next.addEventListener('click', () => show(current + 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') show(current + 1);
+    if (e.key === 'ArrowLeft') show(current - 1);
+  });
+
+  // Reveal buttons
+  document.querySelectorAll('.reveal[data-target]').forEach(b => {
+    b.addEventListener('click', () => {
+      const el = document.getElementById(b.dataset.target);
+      const on = el.classList.toggle('show');
+      b.textContent = on ? 'Hide' : (b.dataset.label || (b.dataset.label = b.textContent));
+    });
+    b.dataset.label = b.textContent;
+  });
+  document.getElementById('next-ex').addEventListener('click', () => {
+    document.getElementById('ex1').style.display = 'none';
+    document.getElementById('ex2').style.display = 'block';
+  });
+  document.getElementById('but-next').addEventListener('click', () => {
+    document.getElementById('but1').style.display = 'none';
+    document.getElementById('but2').style.display = 'block';
+  });
+  document.getElementById('but-prev').addEventListener('click', () => {
+    document.getElementById('but2').style.display = 'none';
+    document.getElementById('but1').style.display = 'block';
+  });
+  document.getElementById('prev-ex').addEventListener('click', () => {
+    document.getElementById('ex2').style.display = 'none';
+    document.getElementById('ex1').style.display = 'block';
+  });
+
+  // Text size
+  const sizeBtns = [...document.querySelectorAll('.size button')];
+  function setSize(px) {
+    document.documentElement.style.fontSize = px + 'px';
+    sizeBtns.forEach(b => b.setAttribute('aria-pressed', b.dataset.size === String(px)));
+    try { localStorage.setItem('runon-size', px); } catch (e) {}
+  }
+  sizeBtns.forEach(b => b.addEventListener('click', () => setSize(b.dataset.size)));
+  try { const saved = localStorage.getItem('runon-size'); if (saved) setSize(saved); } catch (e) {}
+
+  show(0);
+</script>
+</body>
+</html>
